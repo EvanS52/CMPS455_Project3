@@ -7,6 +7,7 @@
 
 #include "copyright.h"
 #include "system.h"
+#include "machine.h"
 
 // This defines *all* of the global data structures used by Nachos.
 // These are all initialized and de-allocated by this file.
@@ -27,6 +28,10 @@ FileSystem  *fileSystem;
 Machine *machine;	// user program memory and registers
 List* activeThreads;
 int threadID;
+//**Begin code changes by Patrick Courts***//
+// Define BitMap
+BitMap *bMap = new BitMap(NumPhysPages);
+//**end code changes by Patrick Courts***//
 #endif
 
 #ifdef FILESYS

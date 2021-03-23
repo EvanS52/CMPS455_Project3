@@ -19,6 +19,10 @@
 #include "system.h"
 #include "addrspace.h"
 #include "noff.h"
+//**begin code changes by Patrick Courts***//
+#include <iostream>
+using namespace std;
+//**begin code changes by Patrick Courts***//
 #ifdef HOST_SPARC
 #include <strings.h>
 #endif
@@ -60,6 +64,13 @@ SwapHeader (NoffHeader *noffH)
 //	"executable" is the file containing the object code to load into memory
 //----------------------------------------------------------------------
 
+//**begin code changes by Patrick Courts***//
+
+// Define global int variable to offset phyiscal pages taken by a process.
+int startPage = 0;
+
+//**end code changes by Patrick Courts***//
+
 AddrSpace::AddrSpace(OpenFile *executable)
 {
     NoffHeader noffH;
@@ -78,18 +89,47 @@ AddrSpace::AddrSpace(OpenFile *executable)
     numPages = divRoundUp(size, PageSize);
     size = numPages * PageSize;
 
-    ASSERT(numPages <= NumPhysPages);		// check we're not trying
+   // ASSERT(numPages <= NumPhysPages);		// check we're not trying
 						// to run anything too big --
 						// at least until we have
 						// virtual memory
+//**begin code changes by Patrick Courts***//
+	if(numPages > NumPhysPages){
+		
+		cout << "Sufficient memory does not exist for your process." << endl;
+		// exit a single process, will handle in Task 4 by changing addrspace constructor		
+	}
+//**end code changes by Patrick Courts***//
 
     DEBUG('a', "Initializing address space, num pages %d, size %d\n", 
 					numPages, size);
 // first, set up the translation 
     pageTable = new TranslationEntry[numPages];
+
+
+int phyPage;
     for (i = 0; i < numPages; i++) {
+	
 	pageTable[i].virtualPage = i;	// for now, virtual page # = phys page #
-	pageTable[i].physicalPage = i;
+
+//**begin code changes by Patrick Courts***//
+	
+	
+	int freePage;
+	// The physical address is mapped to the virtual address + one after the last physical page(frame) of the last process;
+	// Check if the physical page is free, else if check if there is another free page
+	if(!bMap->Test(i + startPage)){
+		phyPage = i + startPage;
+	}else if((freePage = bMap->Find()) != -1){
+		phyPage = i + freePage;
+	}
+
+	// Mark bit and assign physical page
+	bMap->Mark(phyPage);
+	pageTable[i].physicalPage = phyPage;
+
+//**end code changes by Patrick Courts***//
+	
 	pageTable[i].valid = TRUE;
 	pageTable[i].use = FALSE;
 	pageTable[i].dirty = FALSE;
@@ -97,26 +137,41 @@ AddrSpace::AddrSpace(OpenFile *executable)
 					// a separate page, we could set its 
 					// pages to be read-only
     }
+
+//**begin code changes by Patrick Courts***//
+
+// New value of start page is set after the loop above, otherwise it would map the physical pages of the first process incorrectly.
+startPage = numPages;
+
+//**end code changes by Patrick Courts***//
     
 // zero out the entire address space, to zero the unitialized data segment 
 // and the stack segment
-    bzero(machine->mainMemory, size);
+
+//**begin code changes by Patrick Courts***//
+
+int base = (phyPage-numPages)+1;
+    bzero(&(machine->mainMemory[base]), size);
+	// clear bits from bit map?
 
 // then, copy in the code and data segments into memory
+
+
     if (noffH.code.size > 0) {
         DEBUG('a', "Initializing code segment, at 0x%x, size %d\n", 
-			noffH.code.virtualAddr, noffH.code.size);
-        executable->ReadAt(&(machine->mainMemory[noffH.code.virtualAddr]),
+			base, noffH.code.size);
+        executable->ReadAt(&(machine->mainMemory[base]),
 			noffH.code.size, noffH.code.inFileAddr);
     }
     if (noffH.initData.size > 0) {
         DEBUG('a', "Initializing data segment, at 0x%x, size %d\n", 
-			noffH.initData.virtualAddr, noffH.initData.size);
-        executable->ReadAt(&(machine->mainMemory[noffH.initData.virtualAddr]),
+			base, noffH.initData.size);
+        executable->ReadAt(&(machine->mainMemory[base]),
 			noffH.initData.size, noffH.initData.inFileAddr);
     }
 
 }
+//**end code changes by Patrick Courts***//
 
 //----------------------------------------------------------------------
 // AddrSpace::~AddrSpace
