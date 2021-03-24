@@ -18,6 +18,11 @@
 #include "bitmap.h"
 #include "synch.h"
 
+//**Begin code changes by Patrick Courts***//
+// Declare BitMap
+extern BitMap *bMap;
+//**end code changes by Patrick Courts***//
+
 // Initialization and cleanup routines
 extern void Initialize(int argc, char **argv); 	// Initialization,
 						// called before anything else
