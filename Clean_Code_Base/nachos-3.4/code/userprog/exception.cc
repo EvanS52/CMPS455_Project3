@@ -323,25 +323,27 @@ ExceptionHandler(ExceptionType which)
 
 
 			// if argv == -V 1
-			//if (replacementAlg == 1) {
+			if (replacementAlg == 1) {
 			 if(freePage == -1){
-			   // delete currentThread->space;
-				//currentThread->Finish();
-			
+				 delete currentThread->space;
+				 currentThread->Finish();
+
 
 			     freePagePointer = activeThreads->SortedRemove(0);
 			     freePage = *(int*)(freePagePointer);
 
 			   }
+			 }
 
 			//if argv == -V 2
-			//if (replacementAlg == 2) {
-			/*if(freePage == -1){
+			if (replacementAlg == 2) {
+				if(freePage == -1){
 
-			   freePage = Random()%NumPhysPages;
+			  freePage = Random()%NumPhysPages;
+				}
 
 
-			}*/
+			}
 
 
 			// Pull running or sleeping threads out of main memeory
@@ -349,7 +351,7 @@ ExceptionHandler(ExceptionType which)
 		//if(IPT[freePage]->checkStatus()){
 			    //IPT[freePage]->SaveUserState();
 
-			//}
+		//}
 
 
 
