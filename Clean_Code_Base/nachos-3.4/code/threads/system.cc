@@ -32,6 +32,9 @@ int threadID;
 // Define BitMap
 BitMap *bMap = new BitMap(NumPhysPages);
 //**end code changes by Patrick Courts***//
+//**Begin code changes by Brody Fontenot**//
+int showExtraInfo;
+//**End conde changes by Brody Fontenot**//
 #endif
 
 #ifdef FILESYS
@@ -120,7 +123,10 @@ Initialize(int argc, char **argv)
 	    else
 			threadChoice = atoi(*(argv+1));
 	    argCount = 2;
-	} 
+	//**Begin code changes by Brody Fontenot**//
+	} else if (!strcmp(*argv, "-E")) {
+		showExtraInfo = 1;
+	}//**End code changes by Brody Fontenot**//
 #ifdef USER_PROGRAM
 	if (!strcmp(*argv, "-s"))
 	    debugUserProg = TRUE;

@@ -22,6 +22,9 @@
 // Declare BitMap
 extern BitMap *bMap;
 //**end code changes by Patrick Courts***//
+//**Begin code changes by Brody Fontenot**//
+extern int showExtraInfo;
+//**End code changes by Brody Fontenot**//
 
 // Initialization and cleanup routines
 extern void Initialize(int argc, char **argv); 	// Initialization,
