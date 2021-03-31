@@ -88,6 +88,14 @@ class Thread {
 					// must not be running when delete 
 					// is called
 
+    ///*** Begin code changes by Patrick Courts ***///
+
+    // check status of a thread for IPT and page replacement
+    bool checkStatus();
+
+    ///*** Begin code changes by Patrick Courts ***///
+
+
     // basic thread operations
 
     void Fork(VoidFunctionPtr func, int arg); 	// Make thread run (*func)(arg)

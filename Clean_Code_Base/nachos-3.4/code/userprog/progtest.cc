@@ -14,16 +14,24 @@
 #include "addrspace.h"
 #include "synch.h"
 
+
+
 //----------------------------------------------------------------------
 // StartProcess
 // 	Run a user program.  Open the executable, load it into
 //	memory, and jump to it.
 //----------------------------------------------------------------------
 
+
+
+
+
 void
 StartProcess(char *filename)
 {
+	
     OpenFile *executable = fileSystem->Open(filename);
+  
 	
     AddrSpace *space;
 
@@ -32,7 +40,11 @@ StartProcess(char *filename)
 	return;
     }
 	
-    space = new AddrSpace(executable);    
+//*** begin code changes
+
+    space = new AddrSpace(executable, 0);    
+
+//*** end code changes
     currentThread->space = space;
 
     delete executable;			// close file
