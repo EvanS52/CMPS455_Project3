@@ -1,8 +1,8 @@
-// system.cc 
+// system.cc
 //	Nachos initialization and cleanup routines.
 //
 // Copyright (c) 1992-1993 The Regents of the University of California.
-// All rights reserved.  See copyright.h for copyright notice and limitation 
+// All rights reserved.  See copyright.h for copyright notice and limitation
 // of liability and disclaimer of warranty provisions.
 
 #include "copyright.h"
@@ -32,6 +32,11 @@ int threadID;
 // Define BitMap
 BitMap *bMap = new BitMap(NumPhysPages);
 //**end code changes by Patrick Courts***//
+
+//Begin code changes by Quin Hebert
+//Define 'memory scheme algorithm choice from command line(-V 0,1,2)' variable
+int replacementAlg;
+//End code changes by Quin Hebert
 #endif
 
 #ifdef FILESYS
@@ -57,8 +62,8 @@ extern void Cleanup();
 //	Note that instead of calling Yield() directly (which would
 //	suspend the interrupt handler, not the interrupted thread
 //	which is what we wanted to context switch), we set a flag
-//	so that once the interrupt handler is done, it will appear as 
-//	if the interrupted thread called Yield at the point it is 
+//	so that once the interrupt handler is done, it will appear as
+//	if the interrupted thread called Yield at the point it is
 //	was interrupted.
 //
 //	"dummy" is because every interrupt handler takes one argument,
@@ -74,10 +79,10 @@ TimerInterruptHandler(int dummy)
 //----------------------------------------------------------------------
 // Initialize
 // 	Initialize Nachos global data structures.  Interpret command
-//	line arguments in order to determine flags for the initialization.  
-// 
+//	line arguments in order to determine flags for the initialization.
+//
 //	"argc" is the number of command line arguments (including the name
-//		of the command) -- ex: "nachos -d +" -> argc = 3 
+//		of the command) -- ex: "nachos -d +" -> argc = 3
 //	"argv" is an array of strings, one for each command line argument
 //		ex: "nachos -d +" -> argv = {"nachos", "-d", "+"}
 //----------------------------------------------------------------------
@@ -98,7 +103,7 @@ Initialize(int argc, char **argv)
     double rely = 1;		// network reliability
     int netname = 0;		// UNIX socket name
 #endif
-    
+
     for (argc--, argv++; argc > 0; argc -= argCount, argv += argCount) {
 	argCount = 1;
 	if (!strcmp(*argv, "-d")) {
@@ -120,7 +125,28 @@ Initialize(int argc, char **argv)
 	    else
 			threadChoice = atoi(*(argv+1));
 	    argCount = 2;
-	} 
+	}
+
+  //Begin code changes by Quin Hebert
+  //implement new command line option for dynamic page replacement algorithms (-V 0,1,2).
+  else if (!strcmp(*argv, "-V")) {
+    if (argc > 1) {
+      if (atoi(*(argv + 1)) == 0) {
+        printf("Disable Virtual Memory (Demand Paging Only)\n");
+        replacementAlg = atoi(*(argv + 1));
+      }
+      else if (atoi(*(argv + 1)) == 1)  {
+        printf("FIFO Page Replacement\n");
+        replacementAlg = atoi(*(argv + 1));
+      }
+      else if (atoi(*(argv + 1)) == 2) {
+        printf("Random Page Replacement\n");
+        replacementAlg = atoi(*(argv + 1));
+      }
+    }
+  }
+  //end code changes by Quin Hebert
+
 #ifdef USER_PROGRAM
 	if (!strcmp(*argv, "-s"))
 	    debugUserProg = TRUE;
@@ -150,18 +176,18 @@ Initialize(int argc, char **argv)
 	timer = new Timer(TimerInterruptHandler, 0, randomYield);
 
     threadToBeDestroyed = NULL;
-	
-	
+
+
 
     // We didn't explicitly allocate the current thread we are running in.
     // But if it ever tries to give up the CPU, we better have a Thread
-    // object to save its state. 
-    currentThread = new Thread("main");		
+    // object to save its state.
+    currentThread = new Thread("main");
     currentThread->setStatus(RUNNING);
 
     interrupt->Enable();
     CallOnUserAbort(Cleanup);			// if user hits ctl-C
-	
+
 #ifdef USER_PROGRAM
 	machine = new Machine(debugUserProg);
 
@@ -193,7 +219,7 @@ Cleanup()
 #ifdef NETWORK
     delete postOffice;
 #endif
-    
+
 #ifdef USER_PROGRAM
     delete machine;
 	delete activeThreads;
@@ -206,11 +232,10 @@ Cleanup()
 #ifdef FILESYS
     delete synchDisk;
 #endif
-    
+
     delete timer;
     delete scheduler;
     delete interrupt;
-    
+
     Exit(0);
 }
-
