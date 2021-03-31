@@ -190,6 +190,24 @@ Thread::Finish ()
 // 	Similar to Thread::Sleep(), but a little different.
 //----------------------------------------------------------------------
 
+
+///*** Begin code changes by Patrick Courts ***///
+
+    // check if status is running or blocked(sleeping)
+
+bool
+Thread::checkStatus(){
+	if(status == RUNNING || status == BLOCKED){
+		return true;
+	}
+	return false;
+	
+}
+
+    ///*** Begin code changes by Patrick Courts ***///
+
+
+
 void
 Thread::Yield ()
 {
@@ -307,6 +325,9 @@ Thread::StackAllocate (VoidFunctionPtr func, int arg)
 #ifdef USER_PROGRAM
 #include "machine.h"
 #include "list.h"
+
+
+
 
 //----------------------------------------------------------------------
 // Thread::SaveUserState

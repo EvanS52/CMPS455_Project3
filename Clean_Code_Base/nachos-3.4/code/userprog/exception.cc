@@ -28,14 +28,26 @@
 #include "syscall.h"
 #include "addrspace.h"   // FA98
 #include "sysdep.h"   // FA98
+#include <iostream>
+using namespace std;
 
+#include "machine.h" //////////
+#include "list.h"
 // begin FA98
 
 static int SRead(int addr, int size, int id);
 static void SWrite(char *buffer, int size, int id);
 Thread * getID(int toGet);
 
+///***Begin editing code***///
+Thread *IPT[NumPhysPages];
+//activeThreads = new List();
+
+///***Begin editing code***///
+
 // end FA98
+
+
 
 //----------------------------------------------------------------------
 // ExceptionHandler
@@ -193,7 +205,7 @@ ExceptionHandler(ExceptionType which)
 
 				// Calculate needed memory space
 				AddrSpace *space;
-				space = new AddrSpace(executable);
+				space = new AddrSpace(executable, threadID);
 				delete executable;
 				// Do we have enough space?
 				if(!currentThread->killNewChild)	// If so...
@@ -247,9 +259,21 @@ ExceptionHandler(ExceptionType which)
 				if(arg1 == 0)	// Did we exit properly?  If not, show an error message.
 					printf("Process %i exited normally!\n", currentThread->getID());
 				else
-					printf("ERROR: Process %i exited abnormally!\n", currentThread->getID());
+					printf("ERROR: Process %i exited abnormally!, arg1:%d\n", currentThread->getID(), arg1);
 				
 				if(currentThread->space)	// Delete the used memory from the process.
+
+				//*** Begin code changes by Patrick Courts***//
+
+				// Clear bit map
+
+				for(int i = 0; i < NumPhysPages; i++){
+				    if(IPT[i] == currentThread){
+					bMap->Clear(i);
+				    }
+				}
+
+			       //*** End code changes by Patrick Courts***//
 					delete currentThread->space;
 				currentThread->Finish();	// Delete the thread.
 
@@ -273,6 +297,77 @@ ExceptionHandler(ExceptionType which)
                break;
            }         // Advance program counters, ends syscall switch
            break;
+
+//-------------------------------------------------------------------------------------
+// Begin Project 3 code
+//-------------------------------------------------------------------------------------
+		
+		case PageFaultException :{
+			// if argv == -V 0 
+			//printf("No free page available, exiting nachos..."); 
+			// Exit(0);
+			
+
+			printf("Pagefault:");
+			bMap->Print();
+			int freePage = bMap->Find();
+			void *freePagePointer = &freePage;
+			int badVAddr = machine->ReadRegister(BadVAddrReg);
+			int badVPage = badVAddr / PageSize;
+
+			stats->numPageFaults++;
+
+
+			// if argv == -V 1
+			 if(freePage == -1){
+			   // delete currentThread->space;
+				//currentThread->Finish();
+			
+			     freePagePointer = activeThreads->SortedRemove(0);
+			     freePage = *(int*)(freePagePointer);
+
+			   }
+
+			//if argv == -V 2
+			/*if(freePage == -1){
+			    
+			   freePage = Random()%NumPhysPages;
+			   
+
+			}*/
+
+			
+			// Pull running or sleeping threads out of main memeory
+		
+		//if(IPT[freePage]->checkStatus()){
+			    //IPT[freePage]->SaveUserState();
+
+			//}
+					
+			    				
+
+			IPT[freePage] = currentThread;
+			//ThreadStatus st{RUNNING};
+			//IPT[freePage]->setStatus(st);
+			
+			OpenFile *executable = fileSystem->Open(currentThread->space->swapFilename);
+			executable->ReadAt(&(machine->mainMemory[freePage*PageSize]),PageSize,badVPage*PageSize);
+			currentThread->space->pageTable[badVPage].physicalPage = freePage;
+			currentThread->space->pageTable[badVPage].valid=TRUE;
+
+			
+			activeThreads->Append(freePagePointer);
+		
+		
+			bMap->Print();
+			cout << "Page faults: " <<  stats->numPageFaults << endl;
+
+			break;
+		}
+//-------------------------------------------------------------------------------------
+// End Project 3 code
+//-------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------
 
 	case ReadOnlyException :
 		printf("ERROR: ReadOnlyException, called by thread %i.\n",currentThread->getID());
@@ -328,6 +423,8 @@ ExceptionHandler(ExceptionType which)
 		//      if (currentThread->getName() == "main")
 		//      ASSERT(FALSE);
 		//      SExit(1);
+
+			printf("Other errors");
 		break;
 	}
 	delete [] ch;

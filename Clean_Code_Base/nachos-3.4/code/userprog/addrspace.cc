@@ -71,8 +71,10 @@ int startPage = 0;
 
 //**end code changes by Patrick Courts***//
 
-AddrSpace::AddrSpace(OpenFile *executable)
+AddrSpace::AddrSpace(OpenFile *executable, int Thread_id)
 {
+
+	
     NoffHeader noffH;
     unsigned int i, size;
 
@@ -94,11 +96,12 @@ AddrSpace::AddrSpace(OpenFile *executable)
 						// at least until we have
 						// virtual memory
 //**begin code changes by Patrick Courts***//
-	if(numPages > NumPhysPages){
+	//if(numPages > NumPhysPages){
 		
-		cout << "Sufficient memory does not exist for your process." << endl;
+	//	cout << "Sufficient memory does not exist for your process." << endl;
+		//currentThread->Finish();
 		// exit a single process, will handle in Task 4 by changing addrspace constructor		
-	}
+	//}
 //**end code changes by Patrick Courts***//
 
     DEBUG('a', "Initializing address space, num pages %d, size %d\n", 
@@ -107,30 +110,18 @@ AddrSpace::AddrSpace(OpenFile *executable)
     pageTable = new TranslationEntry[numPages];
 
 
-int phyPage;
+
     for (i = 0; i < numPages; i++) {
 	
 	pageTable[i].virtualPage = i;	// for now, virtual page # = phys page #
 
 //**begin code changes by Patrick Courts***//
 	
-	
-	int freePage;
-	// The physical address is mapped to the virtual address + one after the last physical page(frame) of the last process;
-	// Check if the physical page is free, else if check if there is another free page
-	if(!bMap->Test(i + startPage)){
-		phyPage = i + startPage;
-	}else if((freePage = bMap->Find()) != -1){
-		phyPage = i + freePage;
-	}
+		//pageTable[i].physicalPage =
 
-	// Mark bit and assign physical page
-	bMap->Mark(phyPage);
-	pageTable[i].physicalPage = phyPage;
-
+	pageTable[i].valid = FALSE; // For Task 3 (Deman Paging) set bit to false
 //**end code changes by Patrick Courts***//
-	
-	pageTable[i].valid = TRUE;
+
 	pageTable[i].use = FALSE;
 	pageTable[i].dirty = FALSE;
 	pageTable[i].readOnly = FALSE;  // if the code segment was entirely on 
@@ -138,37 +129,33 @@ int phyPage;
 					// pages to be read-only
     }
 
-//**begin code changes by Patrick Courts***//
 
-// New value of start page is set after the loop above, otherwise it would map the physical pages of the first process incorrectly.
-startPage = numPages;
 
-//**end code changes by Patrick Courts***//
-    
-// zero out the entire address space, to zero the unitialized data segment 
-// and the stack segment
 
-//**begin code changes by Patrick Courts***//
-
-int base = (phyPage-numPages)+1;
-    bzero(&(machine->mainMemory[base]), size);
-	// clear bits from bit map?
 
 // then, copy in the code and data segments into memory
 
 
-    if (noffH.code.size > 0) {
-        DEBUG('a', "Initializing code segment, at 0x%x, size %d\n", 
-			base, noffH.code.size);
-        executable->ReadAt(&(machine->mainMemory[base]),
-			noffH.code.size, noffH.code.inFileAddr);
-    }
-    if (noffH.initData.size > 0) {
-        DEBUG('a', "Initializing data segment, at 0x%x, size %d\n", 
-			base, noffH.initData.size);
-        executable->ReadAt(&(machine->mainMemory[base]),
-			noffH.initData.size, noffH.initData.inFileAddr);
-    }
+  
+   //Write code for swap file 
+	//Create a bufffer of size 
+	char* buffer = new char[noffH.code.size + noffH.initData.size + noffH.uninitData.size];
+        swapFilename = new char[20];
+	sprintf(swapFilename, "%d.swap",Thread_id);
+	printf("swapFilename:%s\n", swapFilename);
+	printf("Thread ID: " , Thread_id,"\n");
+	executable->ReadAt(buffer, noffH.code.size + noffH.initData.size + noffH.uninitData.size, sizeof(noffH));
+	
+	fileSystem->Create(swapFilename, noffH.code.size + noffH.initData.size + noffH.uninitData.size);
+	OpenFile *swapFilePointer = fileSystem->Open(swapFilename);
+	printf("swapFilename opened\n");
+	swapFilePointer->WriteAt(buffer, noffH.code.size + noffH.initData.size + noffH.uninitData.size, 0);
+	
+
+   	delete swapFilePointer;
+	delete buffer;
+
+//	delete all pointers 
 
 }
 //**end code changes by Patrick Courts***//
