@@ -1,4 +1,4 @@
-// exception.cc 
+// exception.cc
 //	Entry point into the Nachos kernel from user programs.
 //	There are two kinds of things that can cause control to
 //	transfer back to here from user code:
@@ -9,7 +9,7 @@
 //
 //	exceptions -- The user code does something that the CPU can't handle.
 //	For instance, accessing memory that doesn't exist, arithmetic errors,
-//	etc.  
+//	etc.
 //
 //	Interrupts (which can also cause control to transfer from user
 //	code into the Nachos kernel) are handled elsewhere.
@@ -18,7 +18,7 @@
 // Everything else core dumps.
 //
 // Copyright (c) 1992-1993 The Regents of the University of California.
-// All rights reserved.  See copyright.h for copyright notice and limitation 
+// All rights reserved.  See copyright.h for copyright notice and limitation
 // of liability and disclaimer of warranty provisions.
 
 #include <stdio.h>        // FA98
@@ -63,12 +63,12 @@ Thread *IPT[NumPhysPages];
 //		arg3 -- r6
 //		arg4 -- r7
 //
-//	The result of the system call, if any, must be put back into r2. 
+//	The result of the system call, if any, must be put back into r2.
 //
 // And don't forget to increment the pc before returning. (Or else you'll
 // loop making the same system call forever!
 //
-//	"which" is the kind of exception.  The list of possible exceptions 
+//	"which" is the kind of exception.  The list of possible exceptions
 //	are in machine.h.
 //----------------------------------------------------------------------
 
@@ -92,12 +92,12 @@ Thread* getID(int toGet)	// Goes through the list of active threads and returns 
 		return NULL;
 	else return toReturn;
 }
-	
+
 void processCreator(int arg)	// Used when a process first actually runs, not when it is created.
  {
 	currentThread->space->InitRegisters();		// set the initial register values
     currentThread->space->RestoreState();		// load page table register
-	
+
 	if (threadToBeDestroyed != NULL){
 		delete threadToBeDestroyed;
 		threadToBeDestroyed = NULL;
@@ -140,7 +140,7 @@ ExceptionHandler(ExceptionType which)
 			interrupt->Halt();
 			break;
 
-			
+
 		case SC_Read :
 			if (arg2 <= 0 || arg3 < 0){
 				printf("\nRead 0 byte.\n");
@@ -157,7 +157,7 @@ ExceptionHandler(ExceptionType which)
 					j=j-1;
 				else{
 					ch[j] = (char) i;
-					if (ch[j] == '\0') 
+					if (ch[j] == '\0')
 						break;
 				}
 			}
@@ -178,7 +178,7 @@ ExceptionHandler(ExceptionType which)
 
 				// Read file name into the kernel space
 				char *filename = new char[100];
-				
+
 				for(int m = 0; m < 100; m++)
 					filename[m] = NULL;
 
@@ -194,8 +194,8 @@ ExceptionHandler(ExceptionType which)
 				}
 				// Open File
 				OpenFile *executable = fileSystem->Open(filename);
-				
-				if (executable == NULL) 
+
+				if (executable == NULL)
 				{
 					printf("Unable to open file %s\n", filename);
 					delete filename;
@@ -233,7 +233,7 @@ ExceptionHandler(ExceptionType which)
 					printf("ERROR: Trying to join process %i to process %i, which was not created successfully! Process %i continuing normally.\n", currentThread->getID(), -arg1, currentThread->getID());	// Return an error message, continue as normal.
 					break;
 				}
-				
+
 				if(getID(arg1) != NULL)	// If the thread exists...
 				{
 					if(!currentThread->isJoined)	// And it's not already joined...
@@ -260,7 +260,7 @@ ExceptionHandler(ExceptionType which)
 					printf("Process %i exited normally!\n", currentThread->getID());
 				else
 					printf("ERROR: Process %i exited abnormally!, arg1:%d\n", currentThread->getID(), arg1);
-				
+
 				if(currentThread->space)	// Delete the used memory from the process.
 
 				//*** Begin code changes by Patrick Courts***//
@@ -301,64 +301,107 @@ ExceptionHandler(ExceptionType which)
 //-------------------------------------------------------------------------------------
 // Begin Project 3 code
 //-------------------------------------------------------------------------------------
-		
-		case PageFaultException :{
-			// if argv == -V 0 
-			//printf("No free page available, exiting nachos..."); 
-			// Exit(0);
-			
 
-			printf("Pagefault:");
-			bMap->Print();
+		case PageFaultException :{
+			// if argv == -V 0
+			//printf("No free page available, exiting nachos...");
+			// Exit(0);
+			if (replacementAlg == 0) {
+				printf("No free page available, exiting nachos...\n");
+				Exit(0);
+			}
 			int freePage = bMap->Find();
 			void *freePagePointer = &freePage;
 			int badVAddr = machine->ReadRegister(BadVAddrReg);
 			int badVPage = badVAddr / PageSize;
-
 			stats->numPageFaults++;
 
-
 			// if argv == -V 1
+			if (replacementAlg == 1) {    
 			 if(freePage == -1){
-			   // delete currentThread->space;
-				//currentThread->Finish();
-			
-			     freePagePointer = activeThreads->SortedRemove(0);
+				 //delete currentThread->space;
+				// currentThread->Finish();
+				 freePagePointer = activeThreads->SortedRemove(0);
 			     freePage = *(int*)(freePagePointer);
+			     for(int i = 0; i <activeThreads->getSize(); i++){
+			     	for(int j =0; IPT[i]->space->pageTable[j].physicalPage != -1; j++){
+			     		if(IPT[i]->space->pageTable[j].physicalPage == freePage){
+			     			badVPage = IPT[i]->space->pageTable[j].virtualPage;
+			     			break;
+			     		}
+			     	}
+			     
+			     }
+			    //**Start code changes by Brody Fontenot**//
+				if (showExtraInfo == 1){
+					printf("Page fault: Process %i requests virtual page %d\n", currentThread->getID(), badVPage);
+					printf("Swap out physical page %d from process %i\n", freePage, currentThread->getID());
+					printf("Virtual page %d removed.\n", badVPage);
+					
+					
+				}
+				//**End Code changes by Brody Fontenot**//
 
 			   }
+			 }
 
 			//if argv == -V 2
-			/*if(freePage == -1){
-			    
-			   freePage = Random()%NumPhysPages;
-			   
+			if (replacementAlg == 2) {
+				if(freePage == -1){
+					freePage = Random()%NumPhysPages;
+					for(int i = 0; i <activeThreads->getSize(); i++){
+			     		for(int j =0; IPT[i]->space->pageTable[j].physicalPage != -1; j++){
+			     			if(IPT[i]->space->pageTable[j].physicalPage == freePage){
+			     				badVPage = IPT[i]->space->pageTable[j].virtualPage;
+			     				break;
+			     			}	
+			     		}
+			     
+			     	}
+				//**Start code changes by Brody Fontenot**//
+				if (showExtraInfo == 1){
+					printf("Page fault: Process %i requests virtual page %d\n", currentThread->getID(), badVPage);
+					printf("Swap out physical page %d from process %i\n", freePage, currentThread->getID());
+					printf("Virtual page %d removed.\n", badVPage);
+					
+					
+				}
+				//**End Code changes by Brody Fontenot**//
+				}
 
-			}*/
 
-			
+			}
+				
+			//**Start code changes by Brody Fontenot**//
+			if (showExtraInfo == 1){
+				printf("Page fault: Process %i requests virtual page %d\n", currentThread->getID(), badVPage);
+				printf("Assigning physical page %d\n", freePage);
+			}
+			//**End Code changes by Brody Fontenot**//
+
+
 			// Pull running or sleeping threads out of main memeory
-		
+
 		//if(IPT[freePage]->checkStatus()){
 			    //IPT[freePage]->SaveUserState();
 
-			//}
-					
-			    				
+		//}
+
+
 
 			IPT[freePage] = currentThread;
 			//ThreadStatus st{RUNNING};
 			//IPT[freePage]->setStatus(st);
-			
+
 			OpenFile *executable = fileSystem->Open(currentThread->space->swapFilename);
 			executable->ReadAt(&(machine->mainMemory[freePage*PageSize]),PageSize,badVPage*PageSize);
 			currentThread->space->pageTable[badVPage].physicalPage = freePage;
 			currentThread->space->pageTable[badVPage].valid=TRUE;
 
-			
+
 			activeThreads->Append(freePagePointer);
-		
-		
+
+
 			bMap->Print();
 			cout << "Page faults: " <<  stats->numPageFaults << endl;
 
@@ -483,4 +526,3 @@ static void SWrite(char *buffer, int size, int id)
 	WriteFile(id,buffer,size);
 }
 // end FA98
-

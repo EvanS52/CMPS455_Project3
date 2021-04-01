@@ -144,8 +144,15 @@ AddrSpace::AddrSpace(OpenFile *executable, int Thread_id)
 	sprintf(swapFilename, "%d.swap",Thread_id);
 	printf("swapFilename:%s\n", swapFilename);
 	//**begin code changes by Brody Fontenot**//
+	if (replacementAlg == 1) {
+		printf("FIFO Page Replacement\n");
+	}else if (replacementAlg == 2) {
+		printf("Random Page Replacement\n");
+	}else if (replacementAlg == 0) {
+		printf("Disable Virtual Memory (Demand Paging Only)\n");
+	}
 	printf("Number of physical pages: %d\n",numPages);	 //task 6 output
-	printf("Page size: %d\n", PageSize);			     //task 6 output
+	printf("Page size: %d\n", PageSize);			 //task 6 output
 	//**end code changes by Brody Fontenot**//
 	printf("Thread ID: " , Thread_id,"\n");
 	executable->ReadAt(buffer, noffH.code.size + noffH.initData.size + noffH.uninitData.size, sizeof(noffH));
