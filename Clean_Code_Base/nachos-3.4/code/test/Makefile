@@ -6,7 +6,7 @@
 #
 #    Nachos assumes that the location of the program startup routine (the
 # 	location the kernel jumps to when the program initially starts up)
-#       is at location 0.  This means: start.o must be the first .o passed 
+#       is at location 0.  This means: start.o must be the first .o passed
 # 	to ld, in order for the routine "Start" to be loaded at location 0
 #
 
@@ -35,13 +35,27 @@ CPP = gcc -E
 INCDIR =-I../userprog -I../threads
 CFLAGS = -G 0 -c $(INCDIR)
 
-all: halt shell matmult sort recursionTest
+all: halt shell matmult sort execBadArg ExecJoin recursionTest
 
 start.o: start.s ../userprog/syscall.h
 	$(CPP) $(CPPFLAGS) start.c > strt.s
 	$(AS) $(ASFLAGS) -o start.o strt.s
 	rm strt.s
 
+#Begin code changes made by Evan Soileau
+execBadArg.o: execBadArg.c
+	$(CC) $(CFLAGS) -c execBadArg.c
+execBadArg: execBadArg.o start.o
+	$(LD) $(LDFLAGS) start.o execBadArg.o -o execBadArg.coff
+	../bin/coff2noff execBadArg.coff execBadArg
+
+ExecJoin.o: ExecJoin.c
+	$(CC) $(CFLAGS) -c ExecJoin.c
+ExecJoin: ExecJoin.o start.o
+	$(LD) $(LDFLAGS) start.o ExecJoin.o -o ExecJoin.coff
+	../bin/coff2noff ExecJoin.coff ExecJoin
+
+#End code changes made by Evan Soileau
 
 recursionTest.o: recursionTest.c
 	$(CC) $(CFLAGS) -c recursionTest.c

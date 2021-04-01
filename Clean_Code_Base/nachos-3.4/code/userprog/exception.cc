@@ -299,7 +299,7 @@ ExceptionHandler(ExceptionType which)
            break;
 
 //-------------------------------------------------------------------------------------
-// Begin Project 3 code
+// Begin Project 3 code written by Evan Soileau, Patrick Courts, and Brody Fontenot
 //-------------------------------------------------------------------------------------
 
 		case PageFaultException :{
@@ -317,7 +317,7 @@ ExceptionHandler(ExceptionType which)
 			stats->numPageFaults++;
 
 			// if argv == -V 1
-			if (replacementAlg == 1) {    
+			if (replacementAlg == 1) {
 			 if(freePage == -1){
 				 //delete currentThread->space;
 				// currentThread->Finish();
@@ -330,15 +330,15 @@ ExceptionHandler(ExceptionType which)
 			     			break;
 			     		}
 			     	}
-			     
+
 			     }
 			    //**Start code changes by Brody Fontenot**//
 				if (showExtraInfo == 1){
 					printf("Page fault: Process %i requests virtual page %d\n", currentThread->getID(), badVPage);
 					printf("Swap out physical page %d from process %i\n", freePage, currentThread->getID());
 					printf("Virtual page %d removed.\n", badVPage);
-					
-					
+
+
 				}
 				//**End Code changes by Brody Fontenot**//
 
@@ -354,24 +354,24 @@ ExceptionHandler(ExceptionType which)
 			     			if(IPT[i]->space->pageTable[j].physicalPage == freePage){
 			     				badVPage = IPT[i]->space->pageTable[j].virtualPage;
 			     				break;
-			     			}	
+			     			}
 			     		}
-			     
+
 			     	}
 				//**Start code changes by Brody Fontenot**//
 				if (showExtraInfo == 1){
 					printf("Page fault: Process %i requests virtual page %d\n", currentThread->getID(), badVPage);
 					printf("Swap out physical page %d from process %i\n", freePage, currentThread->getID());
 					printf("Virtual page %d removed.\n", badVPage);
-					
-					
+
+
 				}
 				//**End Code changes by Brody Fontenot**//
 				}
 
 
 			}
-				
+
 			//**Start code changes by Brody Fontenot**//
 			if (showExtraInfo == 1){
 				printf("Page fault: Process %i requests virtual page %d\n", currentThread->getID(), badVPage);
