@@ -33,17 +33,21 @@ using namespace std;
 
 #include "machine.h" //////////
 #include "list.h"
+#include <vector>
 // begin FA98
 
 static int SRead(int addr, int size, int id);
 static void SWrite(char *buffer, int size, int id);
 Thread * getID(int toGet);
 
-///***Begin editing code***///
+///***Begin editing code Patrick Courts***///
 Thread *IPT[NumPhysPages];
-//activeThreads = new List();
 
-///***Begin editing code***///
+typedef struct { int phy; int vir;} info;
+
+vector<info> fifoVec;
+
+///***Begin editing code Patrick Courts***///
 
 // end FA98
 
@@ -261,7 +265,7 @@ ExceptionHandler(ExceptionType which)
 				else
 					printf("ERROR: Process %i exited abnormally!, arg1:%d\n", currentThread->getID(), arg1);
 
-				if(currentThread->space)	// Delete the used memory from the process.
+					// Delete the used memory from the process.
 
 				//*** Begin code changes by Patrick Courts***//
 
@@ -272,9 +276,14 @@ ExceptionHandler(ExceptionType which)
 					bMap->Clear(i);
 				    }
 				}
+				
 
-			       //*** End code changes by Patrick Courts***//
+			     
+				if(currentThread->space){
+					fileSystem->Remove(currentThread->space->swapFilename);
+					  //*** End code changes by Patrick Courts***//
 					delete currentThread->space;
+				}
 				currentThread->Finish();	// Delete the thread.
 
 				break;
@@ -303,19 +312,17 @@ ExceptionHandler(ExceptionType which)
 //-------------------------------------------------------------------------------------
 
 		case PageFaultException :{
-			// if argv == -V 0
-			//printf("No free page available, exiting nachos...");
-			// Exit(0);
+
 			if (replacementAlg == 0) {
 				printf("No free page available, exiting nachos...\n");
 				Exit(0);
 			}
 			int freePage = bMap->Find();
-			void *freePagePointer = &freePage;
 			int badVAddr = machine->ReadRegister(BadVAddrReg);
 			int badVPage = badVAddr / PageSize;
 			stats->numPageFaults++;
 
+<<<<<<< HEAD
 			// if argv == -V 1
 			if (replacementAlg == 1) {
 			 if(freePage == -1){
@@ -332,6 +339,20 @@ ExceptionHandler(ExceptionType which)
 			     	}
 
 			     }
+=======
+		
+			if (replacementAlg == 1) {    
+			 if(freePage == -1){
+				//***Start code changes by Patrick Courts***//
+				freePage = fifoVec.at(0).phy;
+				badVPage = fifoVec.at(0).vir;
+				fifoVec.erase(fifoVec.begin());
+
+			     
+				//***End code changes by Patrick Courts***//
+
+
+>>>>>>> c184051003835bcb6bc25f74e5fa1e4c7ca69ab3
 			    //**Start code changes by Brody Fontenot**//
 				if (showExtraInfo == 1){
 					printf("Page fault: Process %i requests virtual page %d\n", currentThread->getID(), badVPage);
@@ -345,9 +366,10 @@ ExceptionHandler(ExceptionType which)
 			   }
 			 }
 
-			//if argv == -V 2
+	
 			if (replacementAlg == 2) {
 				if(freePage == -1){
+<<<<<<< HEAD
 					freePage = Random()%NumPhysPages;
 					for(int i = 0; i <activeThreads->getSize(); i++){
 			     		for(int j =0; IPT[i]->space->pageTable[j].physicalPage != -1; j++){
@@ -358,6 +380,16 @@ ExceptionHandler(ExceptionType which)
 			     		}
 
 			     	}
+=======
+					int ran = (Random()%fifoVec.size());
+
+					freePage = fifoVec.at(ran).phy;
+					badVPage = fifoVec.at(ran).vir;
+					fifoVec.erase(fifoVec.begin()+ran);
+					
+			     
+			     	
+>>>>>>> c184051003835bcb6bc25f74e5fa1e4c7ca69ab3
 				//**Start code changes by Brody Fontenot**//
 				if (showExtraInfo == 1){
 					printf("Page fault: Process %i requests virtual page %d\n", currentThread->getID(), badVPage);
@@ -380,27 +412,35 @@ ExceptionHandler(ExceptionType which)
 			//**End Code changes by Brody Fontenot**//
 
 
-			// Pull running or sleeping threads out of main memeory
 
-		//if(IPT[freePage]->checkStatus()){
-			    //IPT[freePage]->SaveUserState();
+			//***Start code changes by Patrick Courts***//
 
-		//}
-
-
+			//if(IPT[freePage]->space->pageTable[badVPage].dirty){
+				//currentThread->space->swapFilename = IPT[freePage]->space->swapFilename;
+			//}
 
 			IPT[freePage] = currentThread;
-			//ThreadStatus st{RUNNING};
-			//IPT[freePage]->setStatus(st);
+
+
+		
+	
 
 			OpenFile *executable = fileSystem->Open(currentThread->space->swapFilename);
 			executable->ReadAt(&(machine->mainMemory[freePage*PageSize]),PageSize,badVPage*PageSize);
+
+			if(currentThread->space->pageTable[badVPage].dirty){
+
+executable->WriteAt(&(machine->mainMemory[currentThread->space->pageTable[badVPage].physicalPage*PageSize]),PageSize,currentThread->space->pageTable[badVPage].virtualPage*PageSize);
+			}
 			currentThread->space->pageTable[badVPage].physicalPage = freePage;
 			currentThread->space->pageTable[badVPage].valid=TRUE;
 
 
-			activeThreads->Append(freePagePointer);
+			info i{freePage, badVPage};
 
+			fifoVec.push_back(i);
+
+			//***End code changes by Patrick Courts***//
 
 			bMap->Print();
 			cout << "Page faults: " <<  stats->numPageFaults << endl;
