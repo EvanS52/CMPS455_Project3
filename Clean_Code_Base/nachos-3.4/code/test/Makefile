@@ -35,12 +35,20 @@ CPP = gcc -E
 INCDIR =-I../userprog -I../threads
 CFLAGS = -G 0 -c $(INCDIR)
 
-all: halt shell matmult sort
+all: halt shell matmult sort recursionTest
 
 start.o: start.s ../userprog/syscall.h
 	$(CPP) $(CPPFLAGS) start.c > strt.s
 	$(AS) $(ASFLAGS) -o start.o strt.s
 	rm strt.s
+
+
+recursionTest.o: recursionTest.c
+	$(CC) $(CFLAGS) -c recursionTest.c
+recursionTest: recursionTest.o start.o
+	$(LD) $(LDFLAGS) start.o recursionTest.o -o recursionTest.coff
+	../bin/coff2noff recursionTest.coff recursionTest
+
 
 halt.o: halt.c
 	$(CC) $(CFLAGS) -c halt.c
