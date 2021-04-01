@@ -308,7 +308,7 @@ ExceptionHandler(ExceptionType which)
            break;
 
 //-------------------------------------------------------------------------------------
-// Begin Project 3 code
+// Begin Project 3 code written by Evan Soileau, Patrick Courts, and Brody Fontenot
 //-------------------------------------------------------------------------------------
 
 		case PageFaultException :{
@@ -322,6 +322,24 @@ ExceptionHandler(ExceptionType which)
 			int badVPage = badVAddr / PageSize;
 			stats->numPageFaults++;
 
+<<<<<<< HEAD
+			// if argv == -V 1
+			if (replacementAlg == 1) {
+			 if(freePage == -1){
+				 //delete currentThread->space;
+				// currentThread->Finish();
+				 freePagePointer = activeThreads->SortedRemove(0);
+			     freePage = *(int*)(freePagePointer);
+			     for(int i = 0; i <activeThreads->getSize(); i++){
+			     	for(int j =0; IPT[i]->space->pageTable[j].physicalPage != -1; j++){
+			     		if(IPT[i]->space->pageTable[j].physicalPage == freePage){
+			     			badVPage = IPT[i]->space->pageTable[j].virtualPage;
+			     			break;
+			     		}
+			     	}
+
+			     }
+=======
 		
 			if (replacementAlg == 1) {    
 			 if(freePage == -1){
@@ -334,13 +352,14 @@ ExceptionHandler(ExceptionType which)
 				//***End code changes by Patrick Courts***//
 
 
+>>>>>>> c184051003835bcb6bc25f74e5fa1e4c7ca69ab3
 			    //**Start code changes by Brody Fontenot**//
 				if (showExtraInfo == 1){
 					printf("Page fault: Process %i requests virtual page %d\n", currentThread->getID(), badVPage);
 					printf("Swap out physical page %d from process %i\n", freePage, currentThread->getID());
 					printf("Virtual page %d removed.\n", badVPage);
-					
-					
+
+
 				}
 				//**End Code changes by Brody Fontenot**//
 
@@ -350,6 +369,18 @@ ExceptionHandler(ExceptionType which)
 	
 			if (replacementAlg == 2) {
 				if(freePage == -1){
+<<<<<<< HEAD
+					freePage = Random()%NumPhysPages;
+					for(int i = 0; i <activeThreads->getSize(); i++){
+			     		for(int j =0; IPT[i]->space->pageTable[j].physicalPage != -1; j++){
+			     			if(IPT[i]->space->pageTable[j].physicalPage == freePage){
+			     				badVPage = IPT[i]->space->pageTable[j].virtualPage;
+			     				break;
+			     			}
+			     		}
+
+			     	}
+=======
 					int ran = (Random()%fifoVec.size());
 
 					freePage = fifoVec.at(ran).phy;
@@ -358,20 +389,21 @@ ExceptionHandler(ExceptionType which)
 					
 			     
 			     	
+>>>>>>> c184051003835bcb6bc25f74e5fa1e4c7ca69ab3
 				//**Start code changes by Brody Fontenot**//
 				if (showExtraInfo == 1){
 					printf("Page fault: Process %i requests virtual page %d\n", currentThread->getID(), badVPage);
 					printf("Swap out physical page %d from process %i\n", freePage, currentThread->getID());
 					printf("Virtual page %d removed.\n", badVPage);
-					
-					
+
+
 				}
 				//**End Code changes by Brody Fontenot**//
 				}
 
 
 			}
-				
+
 			//**Start code changes by Brody Fontenot**//
 			if (showExtraInfo == 1){
 				printf("Page fault: Process %i requests virtual page %d\n", currentThread->getID(), badVPage);
